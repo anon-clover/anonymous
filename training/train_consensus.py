@@ -13,13 +13,6 @@ from torch.optim import AdamW
 from transformers import get_scheduler
 import json
 
-def clean_and_split_document(doc_str):
-    """
-    直接处理并分割 documents 字符串，支持混合的单引号和双引号
-    """
-    doc_str = doc_str.replace("'", '"')
-    documents = re.findall(r'"(.*?)"', doc_str)
-    return documents
 
 def get_data(file):
     queries = []
@@ -75,26 +68,6 @@ def get_data(file):
     return queries, documents, consensuses
 
 
-def data_preprocess(file, tokenizer):
-    queries, documents, consensuses = get_data(file)
-    
-    # Check for length mismatches after get_data
-    if not (len(queries) == len(documents) == len(consensuses)):
-        raise ValueError(f"Data length mismatch after get_data: "
-                         f"Queries: {len(queries)}, Documents: {len(documents)}, Consensuses: {len(consensuses)}")
-
-    # For input_texts, join the list of document strings into a single string for T5 input
-    input_texts = [f"query: {q} documents: {' '.join(d_list)}" for q, d_list in zip(queries, documents)]
-    
-    data = pd.DataFrame({"input_text": input_texts, "target_text": consensuses})
-    
-    print(f"Number of records for training: {len(data)}")
-    if len(data) == 0:
-        raise ValueError("No data loaded for training. Please check the input file and its parsing in get_data.")
-
-    train_data = tokenizer(data.input_text.to_list(), padding="max_length", max_length=512, truncation=True, return_tensors="pt")
-    target_data = tokenizer(data.target_text.to_list(), padding="max_length", max_length=128, truncation=True, return_tensors="pt")
-    return train_data, target_data
 
 def main():
     parser = argparse.ArgumentParser()
