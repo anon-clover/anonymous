@@ -3,11 +3,9 @@
 
 ## 0. Generate consensus for training dataset
 ```bash
-cd /root/shh/FGRAG/fgrag/data_processing/
 
-python openai_generate_consensus_data.py --dataset arc_challenge, #默认POPQA
+python openai_generate_consensus_data.py --dataset arc_challenge
 
-# output path: /root/shh/FGRAG/fgrag/data/consensus_training/popqa_consensus_data.jsonl
 ```
 
 ## 1. Training Consensusor
@@ -33,7 +31,7 @@ CUDA_VISIBLE_DEVICES=3 python training/train_full_consensus.py \
 
 ### 2.1 
 ```bash
-cd /workspace/conRAG
+cd /workspace/
 chmod +x scripts/generate_consensus_evidence_variants.sh
 ./scripts/generate_consensus_evidence_variants.sh
 ```
@@ -66,7 +64,7 @@ python data_processing/generate_enhanced_consensus.py \
 python inference/selfrag_adaptive_rag.py \
     --input_file data/enhanced_eval/popqa_full_enhanced_consensus_evidence_top2_quality_kmedoids_0729.jsonl \
     --output_file results/popqa/popqa_selfrag_enhanced_final_results_0729.jsonl \
-    --selfrag_model_path /root/shh/selfrag \
+    --selfrag_model_path /root/\
     --task popqa \
     --max_tokens 80 \
     --temperature 0.0 \
@@ -80,7 +78,7 @@ python inference/selfrag_adaptive_rag.py \
 python inference/selfrag_baseline_rag.py \
     --input_file data/enhanced_eval/popqa_full_enhanced_consensus_evidence_top2_quality_kmedoids_0729.jsonl \
     --output_file results/popqa/popqa_selfrag_baseline_final_results_0730.jsonl \
-    --selfrag_model_path /root/shh/selfrag \
+    --selfrag_model_path /root/ \
     --task popqa \
     --max_tokens 100 \
     --temperature 0.0 \
@@ -90,10 +88,6 @@ python inference/selfrag_baseline_rag.py \
 # -----------------------------------------------------------------------------------------------------------------
 
 ## 4. eval
-
-```bash
-cd /root/shh/FGRAG/fgrag
-```
 
 ### 4.1 PopQA评估   
 
