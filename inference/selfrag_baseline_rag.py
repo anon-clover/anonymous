@@ -6,7 +6,7 @@ import sys
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-sys.path.append('/root/shh/FGRAG/fgrag')
+sys.path.append('/root')
 from core.utils import format_arc_choices_for_prompt, postprocess_arc_answer, postprocess_popqa_answer, postprocess_pubqa_answer
 from core.arc_utils import get_arc_choices, format_arc_choices_for_instruction, postprocess_arc_answer_unified, setup_arc_processing
 
@@ -25,16 +25,15 @@ control_tokens = ["[Fully supported]", "[Partially supported]", "[No support / C
 
 
 def postprocess_answer(answer, task):
-    # 保存原始答案用于调试
+
     original_answer = answer
     
-    # 清理控制tokens
+
     for token in control_tokens:
         answer = answer.replace(token, "")
     answer = answer.replace("</s>", "").replace("<|endoftext|>", "").strip()
     answer = answer.replace("\n", " ").strip()
-    
-    # 任务特定的后处理
+
     if task == "arc_challenge":
         return postprocess_arc_answer_unified(answer, original_answer)
     elif task == "popqa":
@@ -70,8 +69,7 @@ def main():
     model = model.to(device).eval()
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    
-    # 使用统一的ARC处理设置
+
     choices_data = setup_arc_processing(args.input_file, args.task)
     
     with open(args.input_file, 'r') as f:
@@ -82,8 +80,8 @@ def main():
     results = []
     for i, item in enumerate(tqdm(data)):
         query = item.get('query', '')
-        consensus_text = item.get('consensus', '')  # 使用共识文本
-        item_choices = item.get('choices', None)  # 从数据项中获取选项
+        consensus_text = item.get('consensus', '') 
+        item_choices = item.get('choices', None)  
 
         prompt = format_enhanced_adaptive_prompt(i, args.task, query, consensus_text, choices_data, item_choices)
         raw_answer = query_selfrag(model, tokenizer, prompt, device, args.task, args.max_tokens, args.temperature)
@@ -99,8 +97,6 @@ def main():
     with open(args.output_file, 'w') as f:
         for result in results:
             f.write(json.dumps(result, ensure_ascii=False) + '\n')
-    
-    print(f"SelfRAG Baseline (共识)完成处理 {len(results)} 个样本")
 
 if __name__ == "__main__":
     main()
