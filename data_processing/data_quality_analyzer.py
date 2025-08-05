@@ -1,8 +1,4 @@
-"""
-数据质量分析和清理工具
 
-用于分析训练数据质量并生成清理后的高质量训练数据
-"""
 
 import json
 import argparse
@@ -12,7 +8,7 @@ import re
 from collections import Counter
 
 def analyze_consensus_quality(file_path: str) -> Dict[str, Any]:
-    """分析共识数据的质量"""
+
     total_count = 0
     low_quality_count = 0
     empty_consensus = 0
@@ -24,9 +20,6 @@ def analyze_consensus_quality(file_path: str) -> Dict[str, Any]:
         "cannot be generated", 
         "no consensus answer",
         "insufficient evidence",
-        "提供的文档不包含",
-        "无法总结",
-        "没有足够证据",
         "NO_PASSAGES_PROVIDED",
         "PASSAGES_EMPTY",
         "ERROR_PROCESSING",
@@ -37,13 +30,13 @@ def analyze_consensus_quality(file_path: str) -> Dict[str, Any]:
     with open(file_path, 'r', encoding='utf-8') as f:
         for line_num, line in enumerate(f, 1):
             try:
-                # 支持两种格式：JSONL和文本格式
+            
                 if line.strip().startswith('{'):
-                    # JSONL格式
+                    
                     data = json.loads(line.strip())
                     consensus = data.get('consensus', '')
                 else:
-                    # 文本格式
+                    
                     if line.startswith('consensus:'):
                         consensus = line.split('consensus:', 1)[1].strip()
                     else:
@@ -60,7 +53,7 @@ def analyze_consensus_quality(file_path: str) -> Dict[str, Any]:
                     short_consensus += 1
                     quality_issues['too_short'] += 1
                 
-                # 检查低质量模式
+          
                 consensus_lower = consensus.lower()
                 is_low_quality = False
                 for pattern in low_quality_patterns:
@@ -88,16 +81,13 @@ def analyze_consensus_quality(file_path: str) -> Dict[str, Any]:
     }
 
 def clean_training_data(input_file: str, output_file: str, min_consensus_length: int = 20) -> int:
-    """清理训练数据，移除低质量样本"""
+
     
     low_quality_patterns = [
         "do not contain sufficient evidence",
         "cannot be generated",
         "no consensus answer", 
         "insufficient evidence",
-        "提供的文档不包含",
-        "无法总结",
-        "没有足够证据",
         "NO_PASSAGES_PROVIDED",
         "PASSAGES_EMPTY",
         "ERROR_PROCESSING",
@@ -117,17 +107,17 @@ def clean_training_data(input_file: str, output_file: str, min_consensus_length:
             total_count += 1
             
             if line.startswith('query:'):
-                # 处理前一个条目
+             
                 if current_entry and consensus_lines:
                     consensus = ' '.join(consensus_lines).strip()
                     if is_high_quality_consensus(consensus, low_quality_patterns, min_consensus_length):
-                        # 写入高质量条目
+                      
                         outfile.write(f"query: {current_entry['query']}\n")
                         outfile.write(f"documents: {current_entry['documents']}\n")
                         outfile.write(f"consensus: {consensus}\n\n")
                         cleaned_count += 1
                 
-                # 开始新条目
+             
                 current_entry = {'query': line.split('query:', 1)[1].strip()}
                 consensus_lines = []
                 
@@ -137,10 +127,10 @@ def clean_training_data(input_file: str, output_file: str, min_consensus_length:
             elif line.startswith('consensus:'):
                 consensus_lines = [line.split('consensus:', 1)[1].strip()]
                 
-            elif line and consensus_lines:  # 续行
+            elif line and consensus_lines: 
                 consensus_lines.append(line)
         
-        # 处理最后一个条目
+  
         if current_entry and consensus_lines:
             consensus = ' '.join(consensus_lines).strip()
             if is_high_quality_consensus(consensus, low_quality_patterns, min_consensus_length):
@@ -155,7 +145,7 @@ def clean_training_data(input_file: str, output_file: str, min_consensus_length:
     return cleaned_count
 
 def is_high_quality_consensus(consensus: str, low_quality_patterns: List[str], min_length: int) -> bool:
-    """判断共识是否高质量"""
+ 
     if not consensus or len(consensus.strip()) < min_length:
         return False
     
@@ -168,8 +158,7 @@ def is_high_quality_consensus(consensus: str, low_quality_patterns: List[str], m
 
 def generate_enhanced_training_data(input_files: List[str], output_file: str, 
                                    dataset_weights: Dict[str, float] = None) -> None:
-    """生成增强的混合训练数据"""
-    
+
     if dataset_weights is None:
         dataset_weights = {
             'popqa': 0.4,
@@ -192,11 +181,11 @@ def generate_enhanced_training_data(input_files: List[str], output_file: str,
         
         print(f"Processing {dataset_name} data from {input_file}")
         
-        # 临时清理文件
+ 
         temp_file = input_file + '.cleaned'
         cleaned_count = clean_training_data(input_file, temp_file)
         
-        # 读取清理后的数据
+  
         dataset_data = []
         with open(temp_file, 'r', encoding='utf-8') as f:
             content = f.read().strip()
@@ -221,10 +210,10 @@ def generate_enhanced_training_data(input_files: List[str], output_file: str,
         print(f"Loaded {len(dataset_data)} high-quality samples from {dataset_name}")
         all_high_quality_data.extend(dataset_data)
         
-        # 清理临时文件
+ 
         os.remove(temp_file)
     
-    # 根据权重采样
+
     import random
     random.seed(42)
     
@@ -242,16 +231,15 @@ def generate_enhanced_training_data(input_files: List[str], output_file: str,
             final_training_data.extend(selected)
             print(f"Selected {len(selected)} samples from {dataset_name}")
     
-    # 打乱顺序
+
     random.shuffle(final_training_data)
-    
-    # 保存为JSONL格式（用于新的训练脚本）
+
     jsonl_output = output_file.replace('.txt', '.jsonl')
     with open(jsonl_output, 'w', encoding='utf-8') as f:
         for item in final_training_data:
             f.write(json.dumps(item, ensure_ascii=False) + '\n')
     
-    # 保存为文本格式（兼容现有训练脚本）
+
     with open(output_file, 'w', encoding='utf-8') as f:
         for item in final_training_data:
             f.write(f"query: {item['query']}\n")
