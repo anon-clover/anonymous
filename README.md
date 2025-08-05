@@ -11,7 +11,6 @@ python openai_generate_consensus_data.py --dataset arc_challenge
 ## 1. Training Consensusor
 
 ```bash
-cd /root/shh/FGRAG/fgra
 
 
 CUDA_VISIBLE_DEVICES=3 python training/train_full_consensus.py \
@@ -74,7 +73,6 @@ python inference/selfrag_adaptive_rag.py \
 
 #### Baseline
 ```bash
-# PopQA - Baseline
 python inference/selfrag_baseline_rag.py \
     --input_file data/enhanced_eval/popqa_full_enhanced_consensus_evidence_top2_quality_kmedoids_0729.jsonl \
     --output_file results/popqa/popqa_selfrag_baseline_final_results_0730.jsonl \
@@ -89,7 +87,7 @@ python inference/selfrag_baseline_rag.py \
 
 ## 4. eval
 
-### 4.1 PopQA评估   
+### 4.1 PopQA  
 
 ```bash
 python evaluation/eval.py \
@@ -99,7 +97,7 @@ python evaluation/eval.py \
 ```
 
 
-### 4.4 Bio评估（使用FactScore）
+### 4.4 Bio
 ```bash
 
 conda activate factscore
