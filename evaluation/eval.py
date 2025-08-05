@@ -11,7 +11,7 @@ except ImportError:
     import openai # Old OpenAI library
     OPENAI_NEW_VERSION = False
 
-# --- 从 metrics.py 导入必要的函数 ---
+
 try:
     from core.metrics import normalize_answer
 except ImportError:
@@ -26,7 +26,7 @@ except ImportError:
         def lower(text): return text.lower()
         return white_space_fix(remove_articles(remove_punc(lower(s))))
 
-# --- 数据加载函数 ---
+
 def load_jsonl_data(file_path, num_samples=-1):
     records = []
     if not os.path.exists(file_path):
@@ -46,7 +46,7 @@ def load_jsonl_data(file_path, num_samples=-1):
     print(f"Successfully loaded {len(records)} records from {file_path}.")
     return records
 
-# --- POPQA 评估逻辑 ---
+
 def popqa_loose_match(prediction_str, ground_truth_list_str):
     if not prediction_str or not ground_truth_list_str:
         return False
@@ -118,7 +118,7 @@ def evaluate_popqa_jsonl(predictions_jsonl, golden_jsonl):
     }
     return results
 
-# --- PUBQA 评估逻辑 ---
+
 def evaluate_pubqa_jsonl(predictions_jsonl, golden_jsonl):
     correct_count = 0
     evaluated_count = 0
@@ -156,14 +156,13 @@ def evaluate_pubqa_jsonl(predictions_jsonl, golden_jsonl):
 
     print(f"Evaluating {len(matched_pairs)} matched pairs for PUBQA...")
     for pred_item, gold_item in tqdm(matched_pairs, desc="Evaluating PUBQA"):
-        # 支持多种答案字段名
+
         generated_answer = ""
         for field in ["processed_answer", "generated_answer", "answer"]:
             if field in pred_item:
                 generated_answer = str(pred_item[field]).lower().strip()
                 break
 
-        # 支持两种格式的golden答案
         golden_answer = ""
         if "answer" in gold_item:
             # 格式1: {"answer": "true"}
@@ -179,20 +178,19 @@ def evaluate_pubqa_jsonl(predictions_jsonl, golden_jsonl):
 
         evaluated_count += 1
 
-        # PUBQA 是二分类任务：true/false
-        # 标准化答案格式
+
         if generated_answer in ["true", "yes", "1", "支持", "correct"]:
             pred_normalized = "true"
         elif generated_answer in ["false", "no", "0", "不支持", "incorrect"]:
             pred_normalized = "false"
         else:
-            # 如果答案不明确，尝试从文本中提取
+         
             if "true" in generated_answer or "yes" in generated_answer or "支持" in generated_answer:
                 pred_normalized = "true"
             elif "false" in generated_answer or "no" in generated_answer or "不支持" in generated_answer:
                 pred_normalized = "false"
             else:
-                pred_normalized = generated_answer  # 保持原样，可能不匹配
+                pred_normalized = generated_answer  
 
         if pred_normalized == golden_answer:
             correct_count += 1
@@ -207,7 +205,6 @@ def evaluate_pubqa_jsonl(predictions_jsonl, golden_jsonl):
     }
     return results
 
-# --- ARC Challenge 评估逻辑 ---
 def evaluate_arc_challenge_jsonl(predictions_jsonl, golden_jsonl):
     correct_count = 0
     evaluated_count = 0
@@ -271,7 +268,7 @@ def evaluate_arc_challenge_jsonl(predictions_jsonl, golden_jsonl):
     return results
 
 
-# --- FActScore 评估逻辑 (BIO Dataset) ---
+
 def initialize_openai_client(api_key, base_url=None, timeout=60):
     if not api_key:
         raise ValueError("OpenAI API key is required for FactScore evaluation.")
@@ -512,7 +509,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    if args.verbose: print("启用详细输出模式")
 
     if args.dataset == 'BIO' and not args.openai_api_key:
         args.openai_api_key = "sk-x6RV5LxPPAMQiD97TpLU8NA2hB3iYesjJPzsBy1FVW0NS1uy" 
