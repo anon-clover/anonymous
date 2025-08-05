@@ -42,8 +42,8 @@ chmod +x scripts/generate_consensus_evidence_variants.sh
 ```bash
 python data_processing/generate_enhanced_consensus.py \
     --input_file data/popqa/splits/popqa_full_for_application.jsonl \
-    --output_file data/enhanced_eval/popqa_full_enhanced_consensus_evidence_top2_quality_kmedoids_0729.jsonl \
-    --consensus_model_path models/t5_popqa_consensus_100epochs_gpt4o/model_epoch_95_loss_0.0004 \
+    --output_file data/enhanced_eval/popqa_full_enhanced_consensus.jsonl \
+    --consensus_model_path models/t5_popqa_consensus_100epochs_gpt4o/model_epoch_ \
     --task_type popqa \
     --max_evidence 2 \
     --min_evidence 1 \
@@ -61,8 +61,8 @@ python data_processing/generate_enhanced_consensus.py \
 ```bash
 # PopQA - Enhanced
 python inference/selfrag_adaptive_rag.py \
-    --input_file data/enhanced_eval/popqa_full_enhanced_consensus_evidence_top2_quality_kmedoids_0729.jsonl \
-    --output_file results/popqa/popqa_selfrag_enhanced_final_results_0729.jsonl \
+    --input_file data/enhanced_eval/popqa_full.jsonl \
+    --output_file results/popqa/popqa.jsonl \
     --selfrag_model_path /root/\
     --task popqa \
     --max_tokens 80 \
@@ -74,8 +74,8 @@ python inference/selfrag_adaptive_rag.py \
 #### Baseline
 ```bash
 python inference/selfrag_baseline_rag.py \
-    --input_file data/enhanced_eval/popqa_full_enhanced_consensus_evidence_top2_quality_kmedoids_0729.jsonl \
-    --output_file results/popqa/popqa_selfrag_baseline_final_results_0730.jsonl \
+    --input_file data/enhanced_eval/popqa_full.jsonl \
+    --output_file results/popqa/popqa.jsonl \
     --selfrag_model_path /root/ \
     --task popqa \
     --max_tokens 100 \
@@ -92,7 +92,7 @@ python inference/selfrag_baseline_rag.py \
 ```bash
 python evaluation/eval.py \
     --golden_file eval_data/popqa_longtail_w_gs.jsonl \
-    --answer_file results/popqa/popqa_llama2-13b_adaptive_0730.jsonl \
+    --answer_file results/popqa/popqa.jsonl \
     --dataset POPQA
 ```
 
