@@ -52,9 +52,9 @@ def get_data(file):
             elif line.startswith("consensus:"):
                 consensus_lines.append(line.split("consensus:")[1].strip())
             else:
-                if line and consensus_lines:  # 捕获继续在同一个共识段落的内容
+                if line and consensus_lines:  
                     consensus_lines.append(line)
-        # 最后一条记录的共识处理
+
         if query and document_list_str and consensus_lines:
              consensuses.append(" ".join(consensus_lines))
         
@@ -88,8 +88,8 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED) 
 
-    tokenizer_path = "/root/shh/FGRAG/fgrag/google-t5/t5-large"
-    model_path = "/root/shh/FGRAG/fgrag/google-t5/t5-large"
+    tokenizer_path = "/google-t5/t5-large"
+    model_path = "/google-t5/t5-large"
     
     print(f"Loading tokenizer from: {tokenizer_path}")
     tokenizer = T5Tokenizer.from_pretrained(tokenizer_path)
@@ -136,7 +136,7 @@ def main():
 
     best_loss = float('inf')
     best_model_path = None
-    all_losses = []  # 记录所有epoch的loss
+    all_losses = []  
 
     for epoch in range(num_epochs):
         total_loss = 0
@@ -166,7 +166,7 @@ def main():
 
 
         avg_train_loss = total_loss / len(train_dataloader)
-        all_losses.append(avg_train_loss)  # 记录当前epoch的loss
+        all_losses.append(avg_train_loss)  
         print(f"Epoch: {epoch + 1}, Average Training Loss: {avg_train_loss:.4f}")
 
         if avg_train_loss < best_loss:
@@ -202,7 +202,6 @@ def main():
             tokenizer.save_pretrained(last_model_dir)
             print(f"Last model state saved to: {last_model_dir}")
 
-    # 保存loss历史记录
     loss_history_file = os.path.join(args.save_path, "loss_history.txt")
     with open(loss_history_file, 'w', encoding='utf-8') as f:
         f.write("Epoch\tLoss\n")
