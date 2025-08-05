@@ -51,12 +51,12 @@ def extract_eval_retrieved_data(eval_file, retrieved_file, output_file):
     print(f"{output_file}")
 
 def main():
-    parser = argparse.ArgumentParser(description="提取评估集对应的retrieved数据")
+    parser = argparse.ArgumentParser(description="retrieved data")
     parser.add_argument('--base_dir', type=str, default='/workspace/conRAG',
-                       help='项目根目录')
+                       help='context')
     parser.add_argument('--datasets', nargs='+',
                        default=['popqa', 'arc_challenge', 'bio'],
-                       help='要处理的数据集')
+                       help='processing dataset')
     args = parser.parse_args()
     
     base_dir = Path(args.base_dir)
