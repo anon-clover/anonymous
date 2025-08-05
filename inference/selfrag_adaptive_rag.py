@@ -6,7 +6,7 @@ import sys
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-sys.path.append('/root/shh/FGRAG/fgrag')
+sys.path.append('/root')
 from core.utils import format_arc_choices_for_prompt, postprocess_arc_answer, postprocess_popqa_answer, postprocess_pubqa_answer
 from core.arc_utils import get_arc_choices, format_arc_choices_for_instruction, postprocess_arc_answer_unified, setup_arc_processing
 
@@ -26,25 +26,20 @@ control_tokens = ["[Fully supported]", "[Partially supported]", "[No support / C
 
 
 def format_knowledge_first_prompt(item_index, task, query, consensus_text, additional_evidence_list, choices_data=None, item_choices=None):
-    """
-    知识优先格式：先让模型基于内部知识回答，再考虑检索信息
-    """
-    # 构建指令部分
+
     instruction = TASK_INST[task] + "\n\n## Input:\n\n" + query
-    
-    # 添加选项（对于ARC Challenge）
+
     if task == "arc_challenge":
         choices_to_use = get_arc_choices(item_choices, choices_data, item_index)
         instruction = format_arc_choices_for_instruction(choices_to_use, instruction)
 
-    # 构建知识优先的prompt
     prompt = "### Instruction:\n{0}\n\n### Response:\n".format(instruction)
     
-    # 第一步：基于内部知识的初步判断
+
     prompt += ("First, let me consider what I know from my training data about this question.\n\n"
               "[No Retrieval]Based on my internal knowledge: ")
     
-    # 判断是否有有效的检索信息
+ 
     has_valid_consensus = (consensus_text and consensus_text.strip() and 
                           "ConsensusMissingInInput" not in consensus_text and
                           not any(marker in consensus_text.lower() for marker in ["no consensus answer", "insufficient evidenc"]))
@@ -56,10 +51,7 @@ def format_knowledge_first_prompt(item_index, task, query, consensus_text, addit
 
 
 def postprocess_answer(answer, task):
-    """
-    改进的答案后处理
-    """
-    # 清理控制tokens
+
     for token in control_tokens:
         answer = answer.replace(token, "")
     answer = answer.replace("</s>", "").replace("\n", " ").replace("<|endoftext|>", "").strip()
@@ -90,7 +82,7 @@ def main():
 
     args = parser.parse_args()
     
-    # 加载模型
+
     print(f"Loading Self-RAG model from {args.selfrag_model_path}")
     tokenizer = AutoTokenizer.from_pretrained(args.selfrag_model_path)
     model = AutoModelForCausalLM.from_pretrained(
@@ -100,15 +92,15 @@ def main():
     )
     model = model.to(args.device)
     
-    # 设置特殊tokens
+
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
-    # 处理数据
+
     with open(args.input_file, 'r') as f:
         data = [json.loads(line) for line in f]
 
-    # 限制样本数量
+
     if args.num_samples > 0:
         data = data[:args.num_samples]
 
@@ -121,7 +113,7 @@ def main():
         
         try:
             if args.strategy == 'adaptive':
-                # 自适应策略
+              
                 prompt = format_adaptive_prompt(
                     i, args.task, query, consensus_text, additional_evidence,
                     item.get('choices_data'), item.get('choices')
@@ -130,7 +122,7 @@ def main():
                                               args.max_tokens, args.temperature)
 
             elif args.strategy == 'enhanced_adaptive':
-                # 增强自适应策略：根据信息质量调整推理策略
+              
                 prompt = format_enhanced_adaptive_prompt(
                     i, args.task, query, consensus_text, additional_evidence,
                     item.get('choices_data'), item.get('choices')
@@ -139,7 +131,7 @@ def main():
                                               args.max_tokens, args.temperature)
 
             elif args.strategy == 'two_stage':
-                # 两阶段策略
+             
                 base_prompt, has_consensus, has_evidence = format_knowledge_first_prompt(
                     i, args.task, query, consensus_text, additional_evidence,
                     item.get('choices_data'), item.get('choices')
@@ -148,18 +140,18 @@ def main():
                                                consensus_text, additional_evidence,
                                                args.device, args.max_tokens, args.temperature)
             
-            # 后处理答案
+        
             processed_answer = postprocess_answer(answer, args.task)
             
-            # 保存结果 - 使用与原始方法一致的字段名
+          
             result = {
                 'query': query,
-                'processed_answer': processed_answer,  # 评估脚本期望的字段名
-                'raw_selfrag_response': answer,        # 与原始方法一致
+                'processed_answer': processed_answer,  
+                'raw_selfrag_response': answer,       
                 'method': f'selfrag_{args.strategy}'
             }
             
-            # 保留原始字段
+          
             for key in ['id', 'answerKey', 'choices', 'choices_data']:
                 if key in item:
                     result[key] = item[key]
@@ -168,7 +160,7 @@ def main():
             
         except Exception as e:
             print(f"Error processing item {i}: {e}")
-            # 添加错误结果
+          
             results.append({
                 'query': query,
                 'processed_answer': '',
@@ -176,7 +168,7 @@ def main():
                 'method': f'selfrag_{args.strategy}'
             })
     
-    # 保存结果
+  
     os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
     with open(args.output_file, 'w') as f:
         for result in results:
