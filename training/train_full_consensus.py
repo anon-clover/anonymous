@@ -18,10 +18,10 @@ import json
 def main():
     parser = argparse.ArgumentParser(description="Train T5 consensus model on full datasets")
     parser.add_argument('--train_file', type=str, 
-                       default='/root/shh/FGRAG/fgrag/data/consensus_training/full_mixed_consensus_for_t5_training_gpt4o_2024_11_20.txt',
+                       default='data/consensus_training/full.txt',
                        help='Training data file path')
     parser.add_argument('--save_path', type=str, 
-                       default='/root/shh/FGRAG/fgrag/models/t5_full_consensus_gpt4o_2024_11_20',
+                       default='/models/t5_full_consensus',
                        help='Model save path')
     parser.add_argument('--batch_size', type=int, default=8, help='Training batch size')
     parser.add_argument('--num_epochs', type=int, default=100, help='Number of training epochs (default: 100, saves models only for last 10 epochs)')
@@ -32,16 +32,15 @@ def main():
     train_file = args.train_file
     SEED = args.seed
 
-    # 设置随机种子
+
     random.seed(SEED)
     np.random.seed(SEED)
     torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED) 
 
-    # 模型和分词器路径
-    tokenizer_path = "/root/shh/FGRAG/fgrag/google-t5/t5-large"
-    model_path = "/root/shh/FGRAG/fgrag/google-t5/t5-large"
+    tokenizer_path = "/google-t5/t5-large"
+    model_path = "/google-t5/t5-large"
     
     print(f"=== Full Dataset Consensus Model Training ===")
     print(f"Training file: {train_file}")
@@ -58,7 +57,7 @@ def main():
     print(f"Preprocessing data from: {train_file}")
     train_data, target_data = data_preprocess(train_file, tokenizer)
 
-    # 配置训练
+ 
     batch_size = args.batch_size
     train_dataset = TensorDataset(train_data["input_ids"], train_data["attention_mask"], target_data["input_ids"])
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -73,7 +72,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    # GPU配置
+
     num_gpus = 0
     if torch.cuda.is_available():
         num_gpus = torch.cuda.device_count()
@@ -91,16 +90,15 @@ def main():
 
     best_loss = float('inf')
     best_model_path = None
-    all_losses = []  # 记录所有epoch的loss
+    all_losses = []  
 
-    # 训练配置：前90轮只记录loss，后10轮保存模型
-    save_start_epoch = 90  # 从第91轮开始保存模型
+    save_start_epoch = 90  
 
     print(f"Training for {num_epochs} epochs:")
     print(f"- Epochs 1-{save_start_epoch}: Only recording loss values")
     print(f"- Epochs {save_start_epoch+1}-{num_epochs}: Recording loss + saving models")
 
-    # 训练循环
+
     for epoch in range(num_epochs):
         total_loss = 0
         model.train()
@@ -132,18 +130,16 @@ def main():
 
         print(f"Epoch: {epoch + 1}, Average Training Loss: {avg_train_loss:.4f}")
 
-        # 前90轮只记录loss，不保存模型
         if epoch < save_start_epoch:
             print(f"  -> Loss recorded (no model saved for epochs 1-{save_start_epoch})")
             continue
 
-        # 后10轮：记录loss并保存模型
         print(f"  -> Saving model for epoch {epoch + 1}")
 
         if not os.path.exists(args.save_path):
             os.makedirs(args.save_path)
 
-        # 保存当前epoch的模型
+    
         current_model_dir = os.path.join(args.save_path, f"model_epoch_{epoch+1}_loss_{avg_train_loss:.4f}")
         if not os.path.exists(current_model_dir):
             os.makedirs(current_model_dir)
@@ -153,13 +149,13 @@ def main():
         tokenizer.save_pretrained(current_model_dir)
         print(f"  -> Model saved to: {current_model_dir}")
 
-        # 更新最佳模型
+
         if avg_train_loss < best_loss:
             best_loss = avg_train_loss
             best_model_path = current_model_dir
             print(f"  -> New best model! Loss: {best_loss:.4f}")
 
-    # 保存loss历史记录
+
     loss_history_file = os.path.join(args.save_path, "loss_history.txt")
     with open(loss_history_file, 'w', encoding='utf-8') as f:
         f.write("Epoch\tLoss\n")
@@ -182,7 +178,7 @@ def main():
     print(f"Model trained on mixed consensus data from full datasets")
     print(f"Using GPT-4o-2024-11-20 generated consensus data")
 
-    # 显示loss趋势
+
     print(f"\nLoss trend:")
     print(f"First 10 epochs: {[f'{loss:.4f}' for loss in all_losses[:10]]}")
     if len(all_losses) > 10:
